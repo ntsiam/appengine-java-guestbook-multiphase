@@ -35,6 +35,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.googlecode.objectify.ObjectifyService;
 
+import java.util.List;
+
 /**
  * Form Handling Servlet
  * Most of the action for this sample is in webapp/guestbook.jsp, which displays the
@@ -58,6 +60,20 @@ public class SignGuestbookServlet extends HttpServlet {
       greeting = new Greeting(guestbookName, content, user.getUserId(), user.getEmail());
     } else {
       greeting = new Greeting(guestbookName, content);
+    }
+
+    List<Greeting> greetings = ObjectifyService.ofy()
+          .load()
+          .type(Greeting.class) // We want only Greetings
+          .ancestor(greeting.theBook)    // Anyone in this book
+          .order("-date")       // Most recent first - date is indexed.
+          //.limit(10)             // Only show 5 of them.
+          .list();
+    int cnt=0;
+    for (Greeting greet : greetings) {
+            cnt++;
+            if (cnt > 4)
+        	    ObjectifyService.ofy().delete().entity(greet);
     }
 
     // Use Objectify to save the greeting and now() is used to make the call synchronously as we
